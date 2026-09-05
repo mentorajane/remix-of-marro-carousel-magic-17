@@ -10,7 +10,15 @@ type Body = {
   keywords?: string[];
 };
 
-const MODEL = "google/gemini-3.6-flash";
+const GEMINI_MODEL = process.env["GEMINI_MODEL"] || "gemini-2.0-flash";
+
+function getKeys() {
+  return {
+    gemini:
+      process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || "",
+    lovable: process.env["LOVABLE_API_KEY"] || "",
+  };
+}
 
 function kw(b: Body) {
   const list = (b.keywords || []).filter(Boolean);
@@ -86,20 +94,65 @@ export const Route = createFileRoute("/api/agents")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env["LOVABLE_API_KEY"];
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-
+        const { gemini, lovable } = getKeys();
         const body = (await request.json()) as Body;
         const { system, user } = promptFor(body);
+
+        // 1) Caminho principal: Gemini direto (funciona na Vercel com GEMINI_API_KEY)
+        if (gemini) {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(gemini)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                system_instruction: { parts: [{ text: system }] },
+                contents: [{ parts: [{ text: user }] }],
+                generationConfig: {
+                  temperature: 0.7,
+                  responseMimeType: "application/json",
+                },
+              }),
+            },
+          );
+
+          if (!res.ok) {
+            const text = await res.text();
+            return new Response(text || "Erro no Gemini", { status: res.status });
+          }
+
+          const json = (await res.json()) as {
+            candidates?: { content?: { parts?: { text?: string }[] } }[];
+          };
+          const content =
+            json.candidates?.[0]?.content?.parts
+              ?.map((p) => p.text ?? "")
+              .join("") ?? "";
+          try {
+            return Response.json(extractJson(content));
+          } catch {
+            return new Response("Não foi possível interpretar a resposta da IA", {
+              status: 502,
+            });
+          }
+        }
+
+        // 2) Fallback: gateway Lovable (só funciona com LOVABLE_API_KEY / créditos)
+        if (!lovable) {
+          return new Response(
+            "Missing GEMINI_API_KEY. Configure GEMINI_API_KEY nas Environment Variables da Vercel (pegue grátis em aistudio.google.com).",
+            { status: 500 },
+          );
+        }
 
         const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${key}`,
+            Authorization: `Bearer ${lovable}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: MODEL,
+            model: "google/gemini-3.6-flash",
             messages: [
               { role: "system", content: system },
               { role: "user", content: user },
