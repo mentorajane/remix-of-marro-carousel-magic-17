@@ -313,6 +313,11 @@ function Index() {
     }
   }
 
+    function coverHeadline() {
+    const raw = slides[0]?.title ?? topic;
+    return raw.replace(/\*\*/g, "").replace(/\/\//g, "").trim();
+  }
+
   async function generateImage(prompt?: string) {
     const p = prompt || `${topic} — ${niche} — ${keywords.join(", ")}`;
     setLoading("imagem");
@@ -320,7 +325,7 @@ function Index() {
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p }),
+        body: JSON.stringify({ prompt: p, headline: coverHeadline() }),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as { image: string };
