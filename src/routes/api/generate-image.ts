@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const IMAGE_MODEL =
-  process.env["GEMINI_IMAGE_MODEL"] ||
-  "gemini-2.0-flash-preview-image-generation";
+  process.env["GEMINI_IMAGE_MODEL"] || "gemini-2.5-flash-image";
 
 export const Route = createFileRoute("/api/generate-image")({
   server: {
@@ -12,8 +11,14 @@ export const Route = createFileRoute("/api/generate-image")({
           process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || "";
         const lovable = process.env["LOVABLE_API_KEY"] || "";
 
-        const { prompt } = (await request.json()) as { prompt: string };
-        const styledPrompt = `${prompt}. Editorial magazine cover photography, high contrast, cinematic lighting, brown / black / white color grading, no text, no letters.`;
+        const { prompt, headline } = (await request.json()) as {
+          prompt: string;
+          headline?: string;
+        };
+        const cleanHeadline = (headline ?? "").replace(/\*\*/g, "").replace(/\/\//g, "").trim();
+        const styledPrompt = cleanHeadline
+          ? `${prompt}. Editorial magazine cover photography, high contrast, cinematic lighting, brown / black / white color grading. Render the headline "${cleanHeadline}" as large bold magazine cover typography over the image, with correct Portuguese spelling, short uppercase words, high legibility.`
+          : `${prompt}. Editorial magazine cover photography, high contrast, cinematic lighting, brown / black / white color grading, no text, no letters.`;
 
         // 1) Gemini direto (Vercel + GEMINI_API_KEY)
         if (gemini) {
@@ -91,4 +96,3 @@ export const Route = createFileRoute("/api/generate-image")({
     },
   },
 });
-
