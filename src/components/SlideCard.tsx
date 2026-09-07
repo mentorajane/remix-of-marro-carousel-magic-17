@@ -168,16 +168,7 @@ export function SlideCard({
         </span>
       </div>
 
-      {isCover ? (
-        <div
-          style={{
-            position: "relative",
-            height: 6,
-            margin: "26px 64px 0",
-            backgroundColor: theme.accent,
-          }}
-        />
-      ) : null}
+     
 
       <div style={{ flex: 1 }} />
 
