@@ -168,8 +168,6 @@ export function SlideCard({
         </span>
       </div>
 
-     
-
       <div style={{ flex: 1 }} />
 
       <div style={{ position: "relative", padding: "0 64px 72px" }}>
