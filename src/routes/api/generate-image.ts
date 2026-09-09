@@ -5,6 +5,34 @@ const IMAGE_MODEL =
 
 const HF_MODEL = "black-forest-labs/FLUX.1-schnell";
 
+function buildPrompt(prompt: string, headline?: string) {
+  const base = prompt.replace(/\*\*/g, "").replace(/\/\//g, "").trim();
+
+  const qualityModifiers = [
+    "professional magazine cover photography",
+    "high-end editorial style",
+    "studio lighting with soft shadows",
+    "shallow depth of field",
+    "cinematic color grading",
+    "warm brown and cream tones",
+    "high contrast",
+    "sharp focus on subject",
+    "bokeh background",
+    "professional retouching",
+    "4K ultra HD quality",
+    "magazine quality composition",
+    "rule of thirds",
+    "balanced visual hierarchy",
+  ].join(", ");
+
+  if (headline) {
+    const cleanHeadline = headline.replace(/\*\*/g, "").replace(/\/\//g, "").trim();
+    return `${base}, ${qualityModifiers}. Render the headline "${cleanHeadline}" as elegant, bold magazine cover typography with correct Portuguese spelling, uppercase letters, modern sans-serif font, high legibility, centered composition.`;
+  }
+
+  return `${base}, ${qualityModifiers}. Clean background, no text, no letters, no watermarks, suitable for magazine cover overlay.`;
+}
+
 export const Route = createFileRoute("/api/generate-image")({
   server: {
     handlers: {
@@ -17,13 +45,8 @@ export const Route = createFileRoute("/api/generate-image")({
           prompt: string;
           headline?: string;
         };
-        const cleanHeadline = (headline ?? "")
-          .replace(/\*\*/g, "")
-          .replace(/\/\//g, "")
-          .trim();
-        const styledPrompt = cleanHeadline
-          ? `${prompt}. Editorial magazine cover photography, high contrast, cinematic lighting, brown / black / white color grading. Render the headline "${cleanHeadline}" as large bold magazine cover typography over the image, with correct Portuguese spelling, short uppercase words, high legibility.`
-          : `${prompt}. Editorial magazine cover photography, high contrast, cinematic lighting, brown / black / white color grading, no text, no letters.`;
+
+        const styledPrompt = buildPrompt(prompt, headline);
 
         // 1) Gemini (melhor qualidade, precisa de cota)
         if (gemini) {
@@ -35,7 +58,12 @@ export const Route = createFileRoute("/api/generate-image")({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   contents: [{ parts: [{ text: styledPrompt }] }],
-                  generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+                  generationConfig: {
+                    responseModalities: ["TEXT", "IMAGE"],
+                    imageConfig: {
+                      aspectRatio: "3:4",
+                    },
+                  },
                 }),
               },
             );
@@ -79,9 +107,14 @@ export const Route = createFileRoute("/api/generate-image")({
                 },
                 body: JSON.stringify({
                   inputs: styledPrompt,
-                  parameters: { width: 1024, height: 1350 },
+                  parameters: {
+                    width: 1024,
+                    height: 1350,
+                    guidance_scale: 7.5,
+                    num_inference_steps: 20,
+                  },
                 }),
-                signal: AbortSignal.timeout(55000),
+                signal: AbortSignal.timeout(60000),
               },
             );
 
