@@ -129,7 +129,7 @@ export function SlideCard({
             style={{
               position: "absolute",
               inset: 0,
-              background: `linear-gradient(to top, ${theme.bg} 12%, ${theme.bg}cc 42%, transparent 78%)`,
+              background: `linear-gradient(to top, ${theme.bg} 0%, ${theme.bg}99 25%, ${theme.bg}4d 50%, transparent 75%)`,
             }}
           />
         </>
@@ -167,6 +167,17 @@ export function SlideCard({
           {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>
       </div>
+
+      {isCover ? (
+        <div
+          style={{
+            position: "relative",
+            height: 6,
+            margin: "26px 64px 0",
+            background: `linear-gradient(90deg, ${theme.accent} 0%, ${theme.highlight} 100%)`,
+          }}
+        />
+      ) : null}
 
       <div style={{ flex: 1 }} />
 
