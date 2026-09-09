@@ -656,7 +656,7 @@ function Index() {
 
         {/* Preview */}
         <section className="min-w-0 space-y-6">
-          <Carousel opts={{ align: "start" }} className="w-full max-w-full overflow-hidden">
+          <Carousel opts={{ align: "start" }} className="w-full max-w-full overflow-hidden carousel-scroll">
             <CarouselContent className="-ml-4">
               {slides.map((s, i) => (
                 <CarouselItem key={i} className="basis-auto pl-4">
