@@ -154,7 +154,7 @@ function Index() {
   const [themeIdx, setThemeIdx] = useState(0);
   const [custom, setCustom] = useState<CardTheme | null>(null);
   const [slides, setSlides] = useState<Slide[]>(DEFAULT_SLIDES);
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<(string | null)[]>([]);
   const [research, setResearch] = useState("");
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState<Stage | "imagem" | "export" | "voz" | null>(null);
@@ -318,19 +318,23 @@ function Index() {
     return raw.replace(/\*\*/g, "").replace(/\/\//g, "").trim();
   }
 
-  async function generateImage(prompt?: string) {
+  async function generateImage(idx: number, prompt?: string) {
     const p = prompt || `${topic} — ${niche} — ${keywords.join(", ")}`;
     setLoading("imagem");
     try {
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: p, headline: coverHeadline() }),
+        body: JSON.stringify({ prompt: p, headline: slides[idx]?.title }),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as { image: string };
-      setImage(data.image);
-      toast.success("Imagem de capa gerada");
+      setImages((prev) => {
+        const next = [...prev];
+        next[idx] = data.image;
+        return next;
+      });
+      toast.success("Imagem gerada");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao gerar imagem");
     } finally {
@@ -338,10 +342,16 @@ function Index() {
     }
   }
 
-  function onUpload(file?: File) {
+  function onUpload(idx: number, file?: File) {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setImage(String(reader.result));
+    reader.onload = () => {
+      setImages((prev) => {
+        const next = [...prev];
+        next[idx] = String(reader.result);
+        return next;
+      });
+    };
     reader.readAsDataURL(file);
   }
 
@@ -526,7 +536,7 @@ function Index() {
                 variant="secondary"
                 className="flex-1"
                 disabled={busy}
-                onClick={() => generateImage()}
+                onClick={() => generateImage(0)}
               >
                 {loading === "imagem" ? <Loader2 className="animate-spin" /> : <Sparkles />}
                 Gerar com IA
@@ -539,7 +549,7 @@ function Index() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => onUpload(e.target.files?.[0])}
+                    onChange={(e) => onUpload(0, e.target.files?.[0])}
                   />
                 </label>
               </Button>
@@ -639,7 +649,7 @@ function Index() {
                             index={i}
                             total={slides.length}
                             theme={theme}
-                            image={image}
+                            image={images[i] ?? null}
                             brand={brand}
                             isCover={i === 0}
                             height={cardH}
@@ -658,6 +668,30 @@ function Index() {
                         setSlides(next);
                       }}
                     />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="flex-1"
+                        disabled={busy}
+                        onClick={() => generateImage(i)}
+                      >
+                        {loading === "imagem" ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                        Gerar
+                      </Button>
+                      <Button variant="outline" size="sm" asChild className="flex-1">
+                        <label className="cursor-pointer">
+                          <Upload />
+                          Subir
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => onUpload(i, e.target.files?.[0])}
+                          />
+                        </label>
+                      </Button>
+                    </div>
                   </div>
                 </CarouselItem>
               ))}
