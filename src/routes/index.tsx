@@ -39,6 +39,8 @@ import {
   Mic,
   Square,
   Tags,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -568,6 +570,35 @@ function Index() {
                   {RATIOS[r].label}
                 </Button>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Quantidade de cards: {slides.length}</Label>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSlides((prev) => [
+                    ...prev,
+                    { kicker: "", title: "Novo card", body: "" },
+                  ]);
+                }}
+              >
+                <Plus /> Adicionar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={slides.length <= 1}
+                onClick={() => {
+                  setSlides((prev) => prev.slice(0, -1));
+                  setImages((prev) => prev.slice(0, -1));
+                }}
+              >
+                <Trash2 /> Remover
+              </Button>
             </div>
           </div>
 
