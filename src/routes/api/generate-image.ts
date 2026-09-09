@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const IMAGE_MODEL =
-  process.env["GEMINI_IMAGE_MODEL"] || "gemini-2.5-flash-image";
+  process.env["GEMINI_IMAGE_MODEL"] || "gemini-3.1-flash-image";
 
 export const Route = createFileRoute("/api/generate-image")({
   server: {
