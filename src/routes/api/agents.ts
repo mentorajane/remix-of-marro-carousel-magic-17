@@ -109,7 +109,6 @@ export const Route = createFileRoute("/api/agents")({
                 system_instruction: { parts: [{ text: system }] },
                 contents: [{ parts: [{ text: user }] }],
                 generationConfig: {
-                  temperature: 0.7,
                   responseMimeType: "application/json",
                 },
               }),
